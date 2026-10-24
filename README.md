@@ -1,179 +1,316 @@
 # Video Toxicity Detector
 
-An end-to-end NLP application that detects toxic speech in videos by extracting audio, converting speech to text, preprocessing the transcript, and classifying toxicity using a trained LightGBM model. The project features an interactive Gradio interface for real-time analysis.
-
----
+**An end-to-end NLP application for detecting toxic speech in video content using Speech Recognition, TF-IDF, LightGBM, and Gradio.**
 
 ## Overview
 
-This project automates the process of identifying toxic speech in video content. It extracts audio from uploaded videos, transcribes the speech into text, applies Natural Language Processing (NLP) techniques for text preprocessing, and predicts whether the content is toxic along with its toxicity categories.
+Video Toxicity Detector is a Python-based machine learning application that analyzes spoken content in uploaded videos to identify potentially toxic language.
 
-This solution can be useful for:
-- Social media content moderation
-- Video content screening
-- Educational demonstrations of NLP pipelines
-- Speech-based toxicity analysis
+The application extracts audio from a video, converts speech into text using Google's Speech Recognition service, preprocesses the transcript using Natural Language Processing (NLP) techniques, and predicts toxicity across six categories using a pre-trained multi-label classification model.
 
----
+An interactive Gradio interface allows users to upload videos, view the generated transcript, and examine toxicity predictions.
 
-##  Features
+## Key Features
 
-- Upload video files for analysis
-- Automatic audio extraction from videos
-- Speech-to-Text transcription
-- Text preprocessing using NLTK
-- TF-IDF feature extraction
-- Toxicity prediction using a trained LightGBM model
-- Detects multiple toxicity categories
-- Interactive Gradio web interface
-- Real-time prediction results
+- **Video Upload:** Accepts video files through an interactive Gradio interface.
+- **Audio Extraction:** Extracts audio from uploaded videos using MoviePy.
+- **Speech-to-Text:** Converts spoken audio into text using Google's Speech Recognition service.
+- **Text Preprocessing:** Applies lowercasing, contraction expansion, tokenization, stopword removal, and stemming.
+- **TF-IDF Vectorization:** Converts processed transcripts into numerical features using a pre-trained TF-IDF vectorizer.
+- **Multi-label Toxicity Classification:** Uses six LightGBM classifiers within a One-vs-Rest classification framework.
+- **Toxicity Probability Estimation:** Estimates probabilities for six toxicity categories.
+- **Prediction Visualization:** Displays the transcript and detected toxicity categories through Gradio.
 
----
+## Toxicity Categories
 
-## Tech Stack
+The application evaluates six toxicity labels:
 
-- Python
-- Scikit-learn
-- LightGBM
-- NLTK
-- SpeechRecognition
-- MoviePy
-- Gradio
-- Pandas
-- NumPy
-- Matplotlib
-- Seaborn
+| Category | Description |
+|---|---|
+| Toxic | Generally offensive, abusive, or harmful language |
+| Severe Toxic | Particularly aggressive or severely abusive language |
+| Obscene | Vulgar or sexually explicit language |
+| Threat | Language expressing threats of harm |
+| Insult | Language containing personal insults |
+| Identity Hate | Hateful language targeting identity-related characteristics |
 
----
+The model uses a probability threshold of **0.50** to determine which categories are reported.
 
-## How It Works
+A transcript can be assigned multiple toxicity labels simultaneously.
 
-1. Upload a video through the Gradio interface.
-2. Audio is extracted from the uploaded video.
-3. The extracted audio is converted into text using Google's Speech Recognition API.
-4. The transcript is cleaned and preprocessed using NLP techniques:
-   - Lowercasing
-   - Contraction expansion
-   - Tokenization
-   - Stopword removal
-   - Stemming
-5. The processed text is transformed into TF-IDF features.
-6. The trained LightGBM classifier predicts the toxicity probabilities.
-7. The application displays:
-   - Video transcript
-   - Toxicity prediction
-   - Toxicity categories detected
+## Technology Stack
 
----
+| Component | Technology |
+|---|---|
+| Programming Language | Python |
+| Machine Learning | LightGBM, Scikit-learn |
+| NLP Preprocessing | NLTK |
+| Feature Extraction | TF-IDF |
+| Speech Recognition | SpeechRecognition (Google) |
+| Video Processing | MoviePy |
+| User Interface | Gradio |
+| Data Processing | Pandas, NumPy |
+| Visualization | Matplotlib, Seaborn |
+| Model Serialization | Pickle |
+
+## System Architecture
+
+```text
+              Video Upload
+                   |
+                   v
+        Audio Extraction
+              MoviePy
+                   |
+                   v
+       Speech-to-Text
+     Google Speech Recognition
+                   |
+                   v
+         Text Preprocessing
+               NLTK
+                   |
+                   v
+        TF-IDF Vectorization
+                   |
+                   v
+       One-vs-Rest Classifier
+         6 LightGBM Models
+                   |
+                   v
+      Toxicity Probabilities
+                   |
+                   v
+         Threshold Filtering
+              > 0.50
+                   |
+                   v
+        Gradio Output
+    Transcript + Toxicity Labels
+```
+
+## Machine Learning Approach
+
+### 1. Text Preprocessing
+
+The transcribed text undergoes several NLP preprocessing steps:
+
+1. Convert text to lowercase.
+2. Expand common English contractions.
+3. Tokenize text into individual words.
+4. Remove special characters and punctuation.
+5. Remove English stopwords.
+6. Apply Porter stemming.
+7. Reconstruct the processed text.
+
+### 2. Feature Extraction
+
+The cleaned transcript is transformed using a saved TF-IDF vectorizer.
+
+The provided vectorizer produces **65,671-dimensional feature vectors**, representing the vocabulary learned during training.
+
+The same saved vectorizer is reused during inference to maintain compatibility with the trained model.
+
+### 3. Toxicity Classification
+
+The application uses a saved `OneVsRestClassifier` containing six LightGBM estimators.
+
+Each estimator predicts the probability of a particular toxicity label.
+
+Unlike traditional single-label classification, this approach supports multiple simultaneous predictions.
+
+### 4. Prediction Threshold
+
+For each toxicity category:
+
+- Probability greater than 0.50: Category reported as detected.
+- Probability less than or equal to 0.50: Category not reported.
+
+If no category exceeds the threshold, the application returns a non-toxic prediction.
+
+The predicted probabilities represent model estimates, not guaranteed measures of toxicity or correctness.
 
 ## Project Structure
 
-```
+The core files used in this project are:
+
+```text
 video-toxicity-detector/
 │
 ├── app.py
-├── model.pkl
-├── vectorizer.pkl
+├── Toxic_lightgbm_model.pkl
+├── Toxic_tfidf_vectorizer.pkl
 ├── requirements.txt
 ├── README.md
+│
 └── screenshots/
 ```
 
----
+**Note:** Rename the uploaded application script to `app.py` and the serialized model files to the names shown above. The current notebook/script uses Colab-specific paths and must be updated to use these local filenames.
 
-##Installation
+## Installation and Setup
 
-Clone the repository
+### Prerequisites
+
+- Python
+- pip
+- FFmpeg, if required by the local audio/video setup
+- Internet connectivity for Google's speech recognition service
+
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/video-toxicity-detector.git
+git clone https://github.com/Aryan-Mathuriya/nlp-video-toxicity-detection.git
+cd nlp-video-toxicity-detection
 ```
 
-Move into the project directory
+### 2. Create a virtual environment
 
 ```bash
-cd video-toxicity-detector
+python -m venv venv
 ```
 
-Install dependencies
+Activate the environment.
+
+**Windows:**
+
+```bash
+venv\Scripts\activate
+```
+
+**Linux/macOS:**
+
+```bash
+source venv/bin/activate
+```
+
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the application
+Ensure that the required packages include:
+
+```text
+numpy
+pandas
+scikit-learn
+lightgbm
+nltk
+SpeechRecognition
+moviepy
+gradio
+matplotlib
+seaborn
+```
+
+The serialized model was created using scikit-learn 1.6.1. For reliable deployment, use compatible library versions and test the model-loading process before publishing the application.
+
+### 4. Download NLTK resources
+
+The application requires NLTK tokenization and stopword resources.
+
+```python
+import nltk
+
+nltk.download("punkt")
+nltk.download("punkt_tab")
+nltk.download("stopwords")
+```
+
+### 5. Configure model paths
+
+Update the application to load the saved model and vectorizer from the project directory instead of Google Colab's `/content/` directory.
+
+The current code also uses a fixed temporary WAV file path. This should be replaced with a temporary-file approach for reliable local execution.
+
+### 6. Run the application
 
 ```bash
 python app.py
 ```
 
----
+Open the local Gradio URL displayed in the terminal.
 
-## Demo
+**Important:** The uploaded application script was originally exported from Google Colab and contains notebook-specific installation commands. These must be removed or adapted before running it as a standalone Python script.
 
-Upload a video file and the application will return:
+## Usage
 
-- Speech Transcript
-- Toxicity Classification
-- Toxicity Categories (if detected)
+1. Launch the Gradio application.
+2. Upload a video containing spoken English.
+3. Wait for audio extraction and transcription.
+4. Review the generated transcript.
+5. Examine the detected toxicity categories and their reported probabilities.
 
-*(Add screenshots here after uploading them.)*
+The processing time depends on video duration, audio quality, speech recognition performance, and system resources.
 
----
+## Model Evaluation
 
-## Model Pipeline
+The supplied application and saved model demonstrate a functioning inference pipeline.
 
-Video Input
-↓
-Audio Extraction (MoviePy)
-↓
-Speech Recognition
-↓
-Text Preprocessing (NLTK)
-↓
-TF-IDF Vectorization
-↓
-LightGBM Classifier
-↓
-Toxicity Prediction
+However, the original training notebook, dataset split, and evaluation results have not been provided.
 
----
+Therefore, the following metrics are not currently verified:
 
-## Libraries Used
+- Accuracy
+- Precision
+- Recall
+- F1-score
+- ROC-AUC
+- Per-label classification performance
 
-- scikit-learn
-- LightGBM
-- SpeechRecognition
-- MoviePy
-- Gradio
-- Pandas
-- NumPy
-- NLTK
-- Matplotlib
-- Seaborn
+These metrics should be reported only after evaluating the model on a suitable held-out dataset.
 
----
+A single successful prediction does not establish the model's overall accuracy.
+
+## Current Limitations
+
+- **Speech Recognition Dependency:** Transcription relies on Google's speech recognition service and requires internet connectivity.
+- **Language Support:** The current preprocessing pipeline is designed primarily for English.
+- **Audio Quality:** Background noise, overlapping speakers, and unclear speech may affect transcription accuracy.
+- **Context Sensitivity:** TF-IDF-based classification may struggle with sarcasm, contextual meaning, and nuanced expressions.
+- **Fixed Threshold:** A uniform 0.50 threshold may not be optimal for every toxicity category.
+- **Video Scope:** The model analyzes transcribed speech, not visual content, gestures, or on-screen text.
+- **Deployment Compatibility:** The original code requires path handling and dependency adjustments for reliable standalone deployment.
 
 ## Future Improvements
 
-- Support multiple languages
-- Real-time microphone analysis
-- Timestamp-based toxicity detection
-- Confidence score visualization
-- Speaker diarization
-- Deploy using Docker
-- Cloud deployment on Hugging Face Spaces or Render
+- Evaluate the model on a held-out test dataset.
+- Add per-label precision, recall, F1-score, and ROC-AUC.
+- Introduce category-specific probability thresholds.
+- Support multilingual speech recognition and toxicity classification.
+- Add timestamp-based toxicity detection.
+- Implement speaker diarization.
+- Explore transformer-based models such as BERT for contextual text classification.
+- Improve exception handling for unsupported files and transcription failures.
+- Add secure temporary-file handling and automatic cleanup.
+- Deploy the application using Docker or Hugging Face Spaces.
 
----
+## Responsible Use
 
-## Author
+This application is intended as a demonstration of machine learning techniques for speech-based content moderation.
+
+Predictions may contain false positives or false negatives. They should not be treated as definitive judgments about a speaker's intentions or used as the sole basis for consequential moderation decisions.
+
+Human review is recommended for sensitive or high-impact applications.
+
+## Acknowledgments
+
+The application notebook was originally authored by **Anmol Talwar**, Founder and Trainer at Talent Catalyst AI.
+
+The project uses that instructional material as its foundation. Any independently developed modifications, enhancements, or deployment work should be documented separately.
+
+## Project Maintainer
 
 **Aryan Mathuriya**
 
-Artificial Intelligence & Data Science Student
+B.Tech — Artificial Intelligence and Data Science
 
-Interested in Machine Learning, NLP, Data Science, and AI Applications.
+GitHub: https://github.com/Aryan-Mathuriya
+
+Areas of Interest: Machine Learning, Natural Language Processing, Data Science, and AI Applications.
 
 ---
 
-## ⭐ If you found this project useful, consider giving it a star!
+**If you find this project useful, consider starring the repository.**
